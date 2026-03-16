@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Financiera V9 - Notificaciones Flotantes</title>
+    <style>
+        :root {
+            /* Paleta de Colores Moderna */
+            --primary: #0f172a;      /* Azul muy oscuro para sidebar */
+            --primary-light: #1e293b; /* Un poco más claro */
+            --accent: #3b82f6;       /* Azul brillante para acciones */
+            --accent-hover: #2563eb;
+            --success: #10b981;      /* Verde esmeralda */
+            --warning: #f59e0b;      /* Amber */
+            --danger: #ef4444;       /* Rojo suave */
+            --bg-body: #f1f5f9;      /* Gris azulado muy claro de fondo */
+            --white: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body { background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- LOGIN --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--primary), #1e40af);
+            display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .login-box { 
+            background: var(--white); padding: 40px; border-radius: var(--radius); 
+            box-shadow: var(--shadow-lg); text-align: center; width: 90%; max-width: 380px; 
+        }
+        .login-box h2 { color: var(--primary); margin-bottom: 20px; font-weight: 700; }
+        .login-box input { 
+            width: 100%; padding: 12px 15px; margin-bottom: 15px; 
+            border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; 
+            transition: border-color 0.2s;
+        }
+        .login-box input:focus { outline: none; border-color: var(--accent); }
+        .login-btn { 
+            width: 100%; padding: 12px; background: var(--accent); color: white; 
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; 
+            transition: background 0.2s; font-size: 1rem;
+        }
+        .login-btn:hover { background: var(--accent-hover); }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: 280px; background: var(--primary); color: white; display: flex; flex-direction: column; transition: 0.3s; box-shadow: var(--shadow-lg); z-index: 100; }
+        .sidebar-header { padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .sidebar-header h3 { font-weight: 600; letter-spacing: 0.5px; }
+        .sidebar-header small { color: #94a3b8; font-size: 0.85rem; margin-top: 5px; display: block; }
+        
+        .nav-links { list-style: none; flex: 1; overflow-y: auto; padding: 15px 0; }
+        .nav-links li { margin-bottom: 5px; padding: 0 15px; }
+        .nav-links li a { 
+            display: flex; align-items: center; padding: 12px 15px; 
+            color: #cbd5e1; text-decoration: none; border-radius: 8px; 
+            transition: all 0.2s; font-weight: 500; font-size: 0.95rem;
+        }
+        .nav-links li a:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-links li a.active { background: var(--accent); color: white; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5); }
+        
+        .logout-btn { 
+            margin: 20px; width: calc(100% - 40px); background: rgba(239, 68, 68, 0.2); 
+            color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); padding: 10px; 
+            border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 600;
+        }
+        .logout-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+        /* --- TOP BAR --- */
+        .top-bar { 
+            background: var(--white); padding: 0 25px; height: 70px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid #e2e8f0; box-shadow: var(--shadow-sm); z-index: 90;
+        }
+        .top-bar h2 { font-size: 1.25rem; color: var(--primary); font-weight: 700; }
+        
+        .controls { display: flex; align-items: center; gap: 20px; }
+        
+        .view-toggle { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); }
+        .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: #cbd5e1; transition: .4s; border-radius: 34px; 
+        }
+        .slider:before { 
+            position: absolute; content: ""; height: 20px; width: 20px; 
+            left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* --- EXCEL BUTTONS --- */
+        .excel-btn {
+            display: flex; align-items: center; gap: 5px; padding: 8px 16px; 
+            background: white; border: 1px solid #cbd5e1; border-radius: 6px; 
+            cursor: pointer; font-size: 0.85rem; color: var(--text-main); font-weight: 600;
+            transition: all 0.2s;
+        }
+        .excel-btn:hover { background: #f8fafc; border-color: var(--accent); color: var(--accent); }
+
+        /* --- BELL (Solo contador) --- */
+        .notif-container { position: relative; cursor: pointer; }
+        .notif-bell { font-size: 1.5rem; color: #64748b; transition: color 0.2s; }
+        .notif-container:hover .notif-bell { color: var(--accent); }
+        .notif-badge {
+            position: absolute; top: -4px; right: -4px; background: var(--danger); color: white;
+            border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: bold;
+            display: none; align-items: center; justify-content: center; border: 2px solid var(--white);
+        }
+
+        /* --- TARJETAS FLOTANTES (NUEVO ESTILO) --- */
+        #notification-cards-area {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 320px;
+            z-index: 950;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            /* Scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        #notification-cards-area::-webkit-scrollbar { width: 6px; }
+        #notification-cards-area::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+        .notif-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-left: 6px solid #cbd5e1;
+            position: relative;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .notif-card.urgent { border-left-color: var(--danger); background: #fef2f2; }
+        .notif-card.warning { border-left-color: var(--warning); background: #fffbeb; }
+        .notif-card.safe { border-left-color: var(--success); background: #f0fdf4; }
+
+        .notif-content { flex: 1; padding-right: 10px; }
+        .notif-title { font-weight: 700; font-size: 0.95rem; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .notif-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+        .notif-days { font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 12px; background: rgba(255,255,255,0.6); }
+        
+        .close-notif {
+            background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; line-height: 1;
+            padding: 0 5px;
+        }
+        .close-notif:hover { color: var(--danger); }
+
+        .content-scroll { flex: 1; overflow-y: auto; padding: 30px; }
+
+        /* --- DASHBOARD & CARDS --- */
+        .balance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .card { 
+            background: var(--white); border-radius: var(--radius); padding: 25px; 
+            box-shadow: var(--shadow-md); border: 1px solid #f1f5f9; 
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-2px); }
+        .card h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; font-weight: 600; }
+        .card .amount { font-size: 2rem; font-weight: 700; color: var(--text-main); }
+        .card.green .amount { color: var(--success); }
+        .card.red .amount { color: var(--danger); }
+
+        /* --- QUICK ENTRY --- */
+        .quick-entry-panel {
+            background: var(--white); padding: 25px; border-radius: var(--radius); 
+            box-shadow: var(--shadow-md); margin-bottom: 35px; border-left: 6px solid var(--accent);
+        }
+        .quick-entry-panel h3 { margin-bottom: 20px; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .quick-row { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+        .q-group { flex: 1; min-width: 160px; }
+        .q-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+        .form-control { 
+            width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; 
+            font-size: 0.95rem; transition: border 0.2s; background: #f8fafc;
+        }
+        .form-control:focus { outline: none; border-color: var(--accent); background: white; }
+        .btn-quick { 
+            padding: 10px 25px; background: linear-gradient(135deg, var(--accent), #1d4ed8); color: white; 
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; height: 42px; 
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4); transition: transform 0.1s;
+        }
+        .btn-quick:active { transform: scale(0.98); }
+
+        /* --- TABLES --- */
+        .table-container { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden; margin-bottom: 25px; border: 1px solid #f1f5f9; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 16px 20px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        th { background: #f8fafc; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+        
+        .sub-header { background: #e0f2fe; color: #0369a1; padding: 12px 20px; font-weight: 700; font-size: 0.9rem; }
+        
+        .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: white; margin-right: 5px; }
+        .btn-pay { background: var(--success); }
+        .btn-forgive { background: #ec4899; }
+        .btn-del { background: var(--danger); }
+
+        /* --- MODALS --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); justify-content: center; align-items: center; z-index: 2000; }
+        .modal.open { display: flex; }
+        .modal-content { background: var(--white); padding: 30px; border-radius: var(--radius); width: 90%; max-width: 500px; box-shadow: var(--shadow-lg); animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-footer { margin-top: 25px; text-align: right; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-modal { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-save { background: var(--accent); color: white; }
+        .btn-cancel { background: #e2e8f0; color: var(--text-main); }
+
+        .hidden { display: none; }
+        #tables-area { display: none; }
+        .hint-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; height: 100%; z-index: 1000; transform: translateX(-100%); width: 260px; }
+            .sidebar.active { transform: translateX(0); }
+            .menu-toggle { display: block; font-size: 1.5rem; cursor: pointer; margin-right: 15px; color: var(--text-main); }
+            .controls { gap: 10px; }
+            .view-toggle span { display: none; } /* Ocultar texto en movil */
+            .quick-entry-panel { padding: 15px; }
+            #notification-cards-area { width: 90%; right: 5%; top: 70px; }
+        }
+        @media (min-width: 769px) { .menu-toggle { display: none; } }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>Finanzas Familia</h2>
+            <input type="text" id="username" placeholder="Usuario">
+            <input type="password" id="password" placeholder="Contraseña">
+            <button class="login-btn" onclick="login()">Ingresar al Sistema</button>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div id="app" style="display:none; width:100%; height:100%;">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Gestión Pro</h3>
+                <small id="user-display">Usuario</small>
+            </div>
+            <ul class="nav-links">
+                <li><a onclick="nav('dashboard')" class="active" id="nav-dashboard">📊 Balance General</a></li>
+                <li><a onclick="nav('receivables')" id="nav-receivables">💰 Cuentas por Cobrar</a></li>
+                <li><a onclick="nav('payables')" id="nav-payables">💳 Cuentas por Pagar</a></li>
+                <li><a onclick="nav('income')" id="nav-income">📈 Ingresos Detallados</a></li>
+                <li><a onclick="nav('expenses')" id="nav-expenses">🛒 Gastos Detallados</a></li>
+                <li><a onclick="nav('assets')" id="nav-assets">🏆 Activos / Patrimonio</a></li>
+                <li><a onclick="nav('savings')" id="nav-savings">🐷 Ahorro</a></li>
+                <li><a onclick="nav('charity')" id="nav-charity">❤️ Tzedaká</a></li>
+            </ul>
+            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        </nav>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <div style="display:flex; align-items:center;">
+                    <span class="menu-toggle" onclick="toggleSidebar()">☰</span>
+                    <h2 id="page-title">Balance</h2>
+                </div>
+                
+                <div class="controls">
+                    <!-- EXCEL BUTTONS -->
+                    <button class="excel-btn" onclick="exportData()">
+                        <span>⬇</span> Bajar Excel
+                    </button>
+                    <input type="file" id="import-file" style="display:none" onchange="importData(this)">
+                    <button class="excel-btn" onclick="document.getElementById('import-file').click()">
+                        <span>⬆</span> Subir Excel
+                    </button>
+
+                    <!-- BELL ICON (SOLO CONTADOR) -->
+                    <div class="notif-container">
+                        <div class="notif-bell">🔔</div>
+                        <div class="notif-badge" id="notif-badge">0</div>
+                    </div>
+
+                    <div class="view-toggle">
+                        <span>Familiar</span>
+                        <label class="switch">
+                            <input type="checkbox" id="view-switch" onchange="toggleView()">
+                            <span class="slider"></span>
+                        </label>
+                        <span>Personal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AREA DE NOTIFICACIONES FLOTANTES -->
+            <div id="notification-cards-area"></div>
+
+            <div class="content-scroll">
+                <!-- SECCION DASHBOARD -->
+                <div id="dashboard">
+                    <div class="quick-entry-panel">
+                        <h3>🚀 Registro Rápido</h3>
+                        <form onsubmit="handleQuickEntry(event)" class="quick-row">
+                            <div class="q-group" style="flex:2;">
+                                <label>1. ¿Qué vas a hacer?</label>
+                                <select id="q-type" class="form-control" onchange="updateQuickFields()" required>
+                                    <option value="" disabled selected>-- Selecciona Acción --</option>
+                                    <optgroup label="💰 DINERO ENTRA">
+                                        <option value="income">INGRESO (Sueldo, Negocio)</option>
+                                        <option value="debt-in">COBRÉ UNA DEUDA</option>
+                                    </optgroup>
+                                    <optgroup label="💸 DINERO SALE">
+                                        <option value="expense">GASTO (Comida, Pasajes)</option>
+                                        <option value="debt-out">PAGUÉ UNA DEUDA</option>
+                                    </optgroup>
+                                    <optgroup label="🤝 PRÉSTAMOS">
+                                        <option value="loan-out">YO PRESTÉ DINERO</option>
+                                        <option value="loan-in">ME PRESTARON DINERO</option>
+                                    </optgroup>
+                                    <optgroup label="🏠 PATRIMONIO">
+                                        <option value="asset">COMPRA DE ACTIVO</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="q-group"><label>Fecha</label><input type="date" id="q-date" class="form-control" required></div>
+                            <div class="q-group"><label id="q-label-desc">Concepto (Opcional)</label><input type="text" id="q-desc" class="form-control"></div>
+                            <div class="q-group"><label>Monto (Soles)</label><input type="number" id="q-amount" class="form-control" step="0.01" placeholder="0.00" required></div>
+                            
+                            <div class="q-group hidden" id="q-group-cat">
+                                <label>Categoría</label>
+                                <select id="q-category" class="form-control"></select>
+                            </div>
+                            <div class="q-group hidden" id="q-group-person">
+                                <label>Persona (Deudor/Acreedor)</label>
+                                <input type="text" id="q-person" class="form-control" placeholder="Nombre">
+                            </div>
+                            <div class="q-group hidden" id="q-group-debt-select">
+                                <label>Seleccionar Deuda Existente</label>
+                                <select id="q-debt-select" class="form-control"><option value="">-- Seleccionar --</option></select>
+                            </div>
+                            <div class="q-group hidden" id="q-group-next-date">
+                                <label>Fecha Próximo Vencimiento</label>
+                                <input type="date" id="q-next-date" class="form-control">
+                                <div class="hint-text">Para la alerta. Actualízalo tras cada pago.</div>
+                            </div>
+                            <div class="q-group hidden" id="q-group-interest">
+                                <label>Interés (%) (Opcional)</label>
+                                <input type="number" id="q-interest" class="form-control" placeholder="Ej. 5" step="0.1">
+                            </div>
+                            <div class="q-group hidden" id="q-group-freq">
+                                <label>Frecuencia</label>
+                                <select id="q-freq" class="form-control">
+                                    <option value="Mensual">Mensual</option>
+                                    <option value="Quincenal">Quincenal</option>
+                                    <option value="Semanal">Semanal</option>
+                                    <option value="Único">Pago Único</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn-quick">Guardar</button>
+                        </form>
+                    </div>
+
+                    <!-- CARDS -->
+                    <div class="balance-grid">
+                        <div class="card green">
+                            <h3>Total Ingresos (Hogar)</h3>
+                            <div class="amount" id="dash-income">S/ 0.00</div>
+                        </div>
+                        <div class="card red">
+                            <h3>Total Gastos (Hogar)</h3>
+                            <div class="amount" id="dash-expense">S/ 0.00</div>
+                        </div>
+                        <div class="card">
+                            <h3>Patrimonio (Activos)</h3>
+                            <div class="amount" id="dash-assets">S/ 0.00</div>
+                        </div>
+                        <div class="card">
+                            <h3>Saldo Neto</h3>
+                            <div class="amount" id="dash-balance">S/ 0.00</div>
+                        </div>
+                        <div class="card">
+                            <h3>Por Cobrar (Pendiente)</h3>
+                            <div class="amount" style="color:var(--success)" id="dash-receivable">S/ 0.00</div>
+                        </div>
+                        <div class="card">
+                            <h3>Por Pagar (Pendiente)</h3>
+                            <div class="amount" style="color:var(--danger)" id="dash-payable">S/ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AREA DE TABLAS -->
+                <div id="tables-area"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL GENERICO -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="margin-bottom:20px; color:var(--primary);">Nuevo Registro</h3>
+            <form id="modal-form" onsubmit="saveModal(event)">
+                <div id="modal-fields"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-modal btn-save">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PAGO -->
+    <div class="modal" id="payment-modal">
+        <div class="modal-content">
+            <h3 style="color:var(--success); margin-bottom:15px;">💵 Registrar Abono</h3>
+            <p id="pay-modal-info" style="margin-bottom:15px; color:var(--text-muted);"></p>
+            <form onsubmit="submitPayment(event)">
+                <input type="hidden" id="pay-loan-id">
+                <div style="margin-bottom:15px;">
+                    <label style="font-weight:600; display:block; margin-bottom:5px;">Monto a abonar:</label>
+                    <input type="number" id="pay-amount" class="form-control" step="0.01" required>
+                </div>
+                <div style="margin-bottom:15px;">
+                    <label style="font-weight:600; display:block; margin-bottom:5px;">Nueva Fecha de Vencimiento:</label>
+                    <input type="date" id="pay-next-date" class="form-control">
+                    <div class="hint-text">Importante: Pon aquí la fecha del *siguiente* pago para que la alerta funcione.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal btn-cancel" onclick="document.getElementById('payment-modal').classList.remove('open')">Cancelar</button>
+                    <button type="submit" class="btn-modal btn-save">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMACION CONDONACION -->
+    <div class="modal" id="forgive-modal">
+        <div class="modal-content">
+            <h3 style="color:#ec4899; margin-bottom:15px;">❤️ Condonar Deuda (Tzedaká)</h3>
+            <p id="forgive-info" style="margin-bottom:15px; color:var(--text-muted);"></p>
+            <form onsubmit="confirmForgive(event)">
+                <input type="hidden" id="forgive-id">
+                <input type="hidden" id="forgive-type">
+                <div style="background:#fdf2f8; padding:15px; border-radius:8px; margin-bottom:20px; font-size:0.9rem; color:#be185d; border:1px solid #fbcfe8;">
+                    <strong>¿Estás seguro?</strong><br>
+                    Esto cancelará el saldo pendiente y lo registrará como caridad.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal btn-cancel" onclick="document.getElementById('forgive-modal').classList.remove('open')">Cancelar</button>
+                    <button type="submit" class="btn-modal" style="background:#ec4899; color:white;">Sí, Condonar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const USERS = { 'brett':'brett', 'dafne':'dafne', 'narda':'narda', 'hitler':'hitler' };
+        const DB_KEY = 'family_finance_v9';
+        
+        let appData = {
+            receivables: [], 
+            payables: [],
+            charity: [],
+            savings: [],
+            assets: [],
+            income: [],
+            expenses: []
+        };
+
+        let currentUser = null;
+        let viewMode = 'FAMILY'; 
+
+        // --- AUTH ---
+        function login() {
+            const u = document.getElementById('username').value.toLowerCase().trim();
+            const p = document.getElementById('password').value.toLowerCase().trim();
+            if(USERS[u] && USERS[u] === p) {
+                currentUser = u;
+                document.getElementById('user-display').textContent = u.charAt(0).toUpperCase()+u.slice(1);
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app').style.display = 'flex';
+                loadData();
+            }
+        }
+        function logout() { location.reload(); }
+
+        // --- DATA ---
+        function loadData() {
+            const saved = localStorage.getItem(DB_KEY);
+            if(saved) appData = JSON.parse(saved);
+            if(!appData.receivables) appData.receivables = [];
+            document.getElementById('q-date').valueAsDate = new Date();
+            nav('dashboard'); 
+        }
+
+        function saveData() {
+            localStorage.setItem(DB_KEY, JSON.stringify(appData));
+            renderDashboard();
+            checkNotifications();
+            if(currentSection !== 'dashboard') renderCurrentSection();
+        }
+
+        // --- NAVIGATION ---
+        let currentSection = 'dashboard';
+        function nav(section) {
+            currentSection = section;
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            document.getElementById(`nav-${section}`).classList.add('active');
+            document.getElementById('page-title').textContent = getTitle(section);
+            
+            const dashboardDiv = document.getElementById('dashboard');
+            const tablesDiv = document.getElementById('tables-area');
+            const notifArea = document.getElementById('notification-cards-area');
+
+            if (section === 'dashboard') {
+                dashboardDiv.style.display = 'block';
+                tablesDiv.style.display = 'none';
+                notifArea.style.display = 'flex'; // Mostrar tarjetas
+                renderDashboard();
+            } else {
+                dashboardDiv.style.display = 'none';
+                tablesDiv.style.display = 'block';
+                notifArea.style.display = 'none'; // Ocultar tarjetas en tablas
+                renderCurrentSection();
+            }
+            if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('active');
+        }
+        function getTitle(k) { const t = {'dashboard':'Balance', 'receivables':'Cuentas por Cobrar', 'payables':'Cuentas por Pagar', 'income':'Ingresos', 'expenses':'Gastos', 'assets':'Activos', 'savings':'Ahorro', 'charity':'Tzedaká'}; return t[k]; }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function toggleView() {
+            viewMode = document.getElementById('view-switch').checked ? 'PERSONAL' : 'FAMILY';
+            renderDashboard();
+            if(currentSection !== 'dashboard') renderCurrentSection();
+        }
+
+        // --- NOTIFICACIONES FLOTANTES ---
+        function checkNotifications() {
+            const container = document.getElementById('notification-cards-area');
+            const badge = document.getElementById('notif-badge');
+            container.innerHTML = '';
+            let count = 0;
+            const today = new Date(); today.setHours(0,0,0,0);
+
+            // Solo alertar de deudas que me pertenecen
+            const myReceivables = appData.receivables.filter(r => !r.owner || r.owner.toLowerCase() === currentUser);
+
+            myReceivables.forEach(loan => {
+                if(!loan.nextPaymentDate || loan.paid >= loan.amount) return;
+                const dueDate = new Date(loan.nextPaymentDate);
+                const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+                let typeClass = 'safe';
+                let icon = '🟢';
+                let title = 'Próximo Pago';
+                let msg = `${loan.person} paga en ${diffDays} días.`;
+                let daysText = `${diffDays} días`;
+
+                if (diffDays < 0) {
+                    typeClass = 'urgent'; icon = '🔴'; title = '¡VENCIDO!'; msg = `El pago venció el ${loan.nextPaymentDate}.`; daysText = 'Atrasado';
+                    count++;
+                } else if (diffDays <= 5) {
+                    typeClass = 'urgent'; icon = '🔴'; title = '¡Urgente!'; msg = `Faltan solo ${diffDays} días.`; daysText = `${diffDays} días`;
+                    count++;
+                } else if (diffDays <= 15) {
+                    typeClass = 'warning'; icon = '🟠'; title = 'Próximo Vencimiento'; msg = `Faltan ${diffDays} días.`; daysText = `${diffDays} días`;
+                }
+
+                // Crear tarjeta HTML
+                const card = document.createElement('div');
+                card.className = `notif-card ${typeClass}`;
+                card.innerHTML = `
+                    <div class="notif-content">
+                        <div class="notif-title">${icon} ${title}</div>
+                        <div class="notif-desc"><strong>${loan.person}</strong> - ${loan.concept || 'Préstamo'}</div>
+                        <div class="notif-desc" style="margin-top:2px;">${msg}</div>
+                        <div class="notif-days">${daysText}</div>
+                    </div>
+                    <button class="close-notif" onclick="this.parentElement.remove()">×</button>
+                `;
+                container.appendChild(card);
+            });
+
+            // Actualizar badge de la campanita
+            badge.style.display = count > 0 ? 'flex' : 'none';
+            badge.textContent = count;
+            if(container.innerHTML === '') {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px; font-size:0.9rem;">🎉 Todo al día. Sin alertas.</div>';
+            }
+        }
+
+        // --- DASHBOARD LOGIC ---
+        function renderDashboard() {
+            const isPersonal = viewMode === 'PERSONAL';
+            let inc = 0, exp = 0, asset = 0, recPend = 0, payPend = 0;
+
+            const sum = (arr, key, personField=null) => arr.reduce((acc, r) => {
+                if(isPersonal && personField && (r[personField]||'').toLowerCase() !== currentUser) return acc;
+                return acc + (parseFloat(r[key])||0);
+            }, 0);
+
+            inc = sum(appData.income, 'amount', 'person');
+            exp = sum(appData.expenses, 'amount', 'person');
+            asset = sum(appData.assets, 'value');
+
+            appData.receivables.forEach(r => {
+                if(isPersonal && r.owner && r.owner.toLowerCase() !== currentUser) return;
+                if(isPersonal && !r.owner) return;
+                recPend += ((parseFloat(r.amount)||0) - (parseFloat(r.paid)||0));
+            });
+
+            appData.payables.forEach(p => {
+                if(isPersonal && p.owner && p.owner.toLowerCase() !== currentUser) return;
+                if(isPersonal && !p.owner) return;
+                payPend += ((parseFloat(p.amount)||0) - (parseFloat(p.paid)||0));
+            });
+
+            const loansOut = sum(appData.receivables, 'amount', 'owner');
+            const loansInPayments = sum(appData.receivables, 'paid', 'owner'); 
+            const net = inc + loansInPayments - exp - loansOut;
+
+            document.getElementById('dash-income').textContent = fmt(inc);
+            document.getElementById('dash-expense').textContent = fmt(exp);
+            document.getElementById('dash-assets').textContent = fmt(asset);
+            document.getElementById('dash-balance').textContent = fmt(net);
+            document.getElementById('dash-receivable').textContent = fmt(recPend);
+            document.getElementById('dash-payable').textContent = fmt(payPend);
+            document.getElementById('dash-balance').className = 'amount ' + (net >= 0 ? '' : 'text-red'); 
+            if(net >= 0) document.getElementById('dash-balance').style.color = 'var(--success)';
+            else document.getElementById('dash-balance').style.color = 'var(--danger)';
+        }
+
+        // --- RENDER TABLES ---
+        function renderCurrentSection() {
+            const container = document.getElementById('tables-area');
+            container.innerHTML = '';
+
+            const buildTable = (data, cols, title, type) => {
+                if(!data.length) return `<div class="sub-header">${title} (Sin datos)</div>`;
+                let rows = data.map(row => {
+                    let tds = cols.map(c => `<td>${(c==='amount'||c==='paid'||c==='value') ? fmt(row[c]) : (row[c]||'')}</td>`).join('');
+                    let actions = `<button class="btn-action btn-del" onclick="delItem('${currentSection}', '${row.id}')">🗑️</button>`;
+                    
+                    const pending = (row.amount - row.paid) > 0;
+                    
+                    if(type === 'receivable' && pending) {
+                        actions = `<button class="btn-action btn-pay" onclick="openPaymentModal('${row.id}')">💵 Pagar</button> ` + actions;
+                        actions = `<button class="btn-action btn-forgive" onclick="openForgiveModal('receivable', '${row.id}')">❤️ Condonar</button> ` + actions;
+                    }
+                    if(type === 'payable' && pending) {
+                        actions = `<button class="btn-action btn-forgive" onclick="openForgiveModal('payable', '${row.id}')">❤️ Me perdonaron</button> ` + actions;
+                    }
+
+                    return `<tr>${tds}<td>${actions}</td></tr>`;
+                }).join('');
+                return `
+                    <div class="sub-header">${title}</div>
+                    <div class="table-container">
+                        <table><thead><tr>${cols.map(c=>`<th>${c.toUpperCase()}</th>`).join('')}<th>ACCIÓN</th></tr></thead><tbody>${rows}</tbody></table>
+                    </div>
+                `;
+            };
+
+            const filter = (arr, filterField='person') => {
+                if (viewMode === 'FAMILY') return arr;
+                const field = (currentSection === 'receivables' || currentSection === 'payables') ? 'owner' : filterField;
+                return arr.filter(x => (x[field]||'').toLowerCase() === currentUser);
+            };
+
+            if(currentSection === 'receivables') {
+                const cols = ['date', 'nextPaymentDate', 'person', 'concept', 'amount', 'interest', 'frequency', 'paid', 'note'];
+                container.innerHTML += buildTable(filter(appData.receivables.filter(r => r.type === 'GRANDE')), cols, 'Préstamos Grandes', 'receivable');
+                container.innerHTML += buildTable(filter(appData.receivables.filter(r => r.type === 'PEQUENO')), ['date', 'person', 'concept', 'amount', 'paid', 'note'], 'Deudas Pequeñas', 'receivable');
+                container.innerHTML += `<div style="text-align:right; padding:20px;"><button class="btn-quick" onclick="openModal('receivables')">+ Nueva Cuenta por Cobrar</button></div>`;
+            }
+            else if(currentSection === 'payables') {
+                const cols = ['date', 'nextPaymentDate', 'person', 'concept', 'amount', 'interest', 'frequency', 'paid', 'note'];
+                container.innerHTML += buildTable(filter(appData.payables.filter(r => r.type === 'GRANDE')), cols, 'Préstamos Grandes Recibidos', 'payable');
+                container.innerHTML += buildTable(filter(appData.payables.filter(r => r.type === 'PEQUENO')), ['date', 'person', 'concept', 'amount', 'paid', 'note'], 'Deudas Pequeñas', 'payable');
+                container.innerHTML += `<div style="text-align:right; padding:20px;"><button class="btn-quick" onclick="openModal('payables')">+ Nueva Cuenta por Pagar</button></div>`;
+            }
+            else if(currentSection === 'income') {
+                container.innerHTML += buildTable(filter(appData.income), ['date', 'concept', 'person', 'amount', 'note'], 'Ingresos', '');
+                container.innerHTML += `<div style="text-align:right; padding:20px;"><button class="btn-quick" onclick="openModal('income')">+ Ingreso</button></div>`;
+            }
+            else if(currentSection === 'expenses') {
+                container.innerHTML += buildTable(filter(appData.expenses), ['date', 'person', 'description', 'category', 'amount', 'note'], 'Gastos', '');
+                container.innerHTML += `<div style="text-align:right; padding:20px;"><button class="btn-quick" onclick="openModal('expenses')">+ Gasto</button></div>`;
+            }
+            else if (currentSection === 'charity') {
+                container.innerHTML += buildTable(appData.charity, ['date', 'concept', 'amount', 'note'], 'Historial de Tzedaká', '');
+                container.innerHTML += `<div style="text-align:right; padding:20px;"><button class="btn-quick" onclick="openModal('charity')">+ Agregar</button></div>`;
+            }
+            else {
+                let data = appData[currentSection];
+                let cols = currentSection==='assets'?['name','value','year','note'] : ['date','amount','note'];
+                if(currentSection==='savings') cols=['date','type','amount','destination','note'];
+                container.innerHTML += buildTable(data, cols, getTitle(currentSection), '');
+                container.innerHTML += `<div style="text-align:right; padding:20px;"><button class="btn-quick" onclick="openModal('${currentSection}')">+ Agregar</button></div>`;
+            }
+        }
+
+        // --- QUICK ENTRY LOGIC ---
+        function updateQuickFields() {
+            const type = document.getElementById('q-type').value;
+            const groups = ['cat', 'person', 'debt-select', 'next-date', 'interest', 'freq'];
+            groups.forEach(g => document.getElementById(`q-group-${g}`).classList.add('hidden'));
+            
+            const descLabel = document.getElementById('q-label-desc');
+            const catSelect = document.getElementById('q-category');
+
+            if (type === 'income') {
+                document.getElementById('q-group-cat').classList.remove('hidden');
+                descLabel.textContent = "Concepto (Opcional)";
+                catSelect.innerHTML = '<option>Sueldo</option><option>Negocio</option><option>Venta</option><option>Inversión</option><option>Regalo</option><option>Otros</option>';
+            } 
+            else if (type === 'expense') {
+                document.getElementById('q-group-cat').classList.remove('hidden');
+                descLabel.textContent = "Concepto (Opcional)";
+                catSelect.innerHTML = '<option>Comida</option><option>Transporte</option><option>Ocio</option><option>Vivienda</option><option>Salud</option><option>Ropa</option><option>Educación</option><option>Otros</option>';
+            }
+            else if (type === 'debt-in') {
+                descLabel.textContent = "Nota (Opcional)";
+                document.getElementById('q-group-debt-select').classList.remove('hidden');
+                const select = document.getElementById('q-debt-select');
+                select.innerHTML = '<option value="">-- Selecciona a quién te pagó --</option>';
+                appData.receivables.filter(r => (r.owner||'').toLowerCase()===currentUser && r.amount > r.paid).forEach(d => {
+                    select.innerHTML += `<option value="${d.id}">${d.person} - Debe: S/ ${(d.amount - d.paid).toFixed(2)}</option>`;
+                });
+            }
+            else if (type === 'debt-out') {
+                descLabel.textContent = "Nota (Opcional)";
+                document.getElementById('q-group-debt-select').classList.remove('hidden');
+                const select = document.getElementById('q-debt-select');
+                select.innerHTML = '<option value="">-- Selecciona a quién pagas --</option>';
+                appData.payables.filter(r => (r.owner||'').toLowerCase()===currentUser && r.amount > r.paid).forEach(d => {
+                    select.innerHTML += `<option value="${d.id}">${d.person} - Debo: S/ ${(d.amount - d.paid).toFixed(2)}</option>`;
+                });
+            }
+            else if (type === 'loan-out' || type === 'loan-in') {
+                descLabel.textContent = "Concepto (Opcional)";
+                document.getElementById('q-group-person').classList.remove('hidden');
+                document.getElementById('q-group-next-date').classList.remove('hidden');
+                document.getElementById('q-group-interest').classList.remove('hidden');
+                document.getElementById('q-group-freq').classList.remove('hidden');
+            }
+            else if (type === 'asset') {
+                descLabel.textContent = "Nombre del Activo";
+            }
+        }
+
+        function handleQuickEntry(e) {
+            e.preventDefault();
+            const type = document.getElementById('q-type').value;
+            const date = document.getElementById('q-date').value;
+            const desc = document.getElementById('q-desc').value;
+            const amount = parseFloat(document.getElementById('q-amount').value);
+            const ownerName = currentUser.charAt(0).toUpperCase()+currentUser.slice(1);
+            
+            if (type === 'income') {
+                appData.income.push({ id: Date.now().toString(), date, concept: desc, person: ownerName, amount, category: document.getElementById('q-category').value });
+            }
+            else if (type === 'expense') {
+                appData.expenses.push({ id: Date.now().toString(), date, description: desc, person: ownerName, amount, category: document.getElementById('q-category').value, type: 'VAR' });
+            }
+            else if (type === 'loan-out') {
+                appData.receivables.push({
+                    id: Date.now().toString(), type: 'GRANDE', date, 
+                    owner: ownerName,
+                    nextPaymentDate: document.getElementById('q-next-date').value,
+                    person: document.getElementById('q-person').value,
+                    concept: desc, amount, paid: 0,
+                    interest: document.getElementById('q-interest').value || '0%',
+                    frequency: document.getElementById('q-freq').value
+                });
+            }
+            else if (type === 'loan-in') {
+                appData.payables.push({
+                    id: Date.now().toString(), type: 'GRANDE', date, 
+                    owner: ownerName,
+                    nextPaymentDate: document.getElementById('q-next-date').value,
+                    person: document.getElementById('q-person').value,
+                    concept: desc, amount, paid: 0,
+                    interest: document.getElementById('q-interest').value || '0%',
+                    frequency: document.getElementById('q-freq').value
+                });
+            }
+            else if (type === 'debt-in') {
+                const debtId = document.getElementById('q-debt-select').value;
+                if(!debtId) { alert("Selecciona una deuda"); return; }
+                const debt = appData.receivables.find(d => d.id === debtId);
+                if(debt) {
+                    debt.paid = (parseFloat(debt.paid) || 0) + amount;
+                    appData.income.push({ id: Date.now().toString(), date, concept: `Cobro: ${debt.concept}`, person: debt.person, amount });
+                }
+            }
+            else if (type === 'debt-out') {
+                const debtId = document.getElementById('q-debt-select').value;
+                if(!debtId) { alert("Selecciona una deuda"); return; }
+                const debt = appData.payables.find(d => d.id === debtId);
+                if(debt) {
+                    debt.paid = (parseFloat(debt.paid) || 0) + amount;
+                    appData.expenses.push({ id: Date.now().toString(), date, description: `Pago: ${debt.concept}`, person: debt.person, amount, type: 'VAR' });
+                }
+            }
+            else if (type === 'asset') {
+                appData.assets.push({ id: Date.now().toString(), name: desc, value: amount, year: new Date().getFullYear() });
+            }
+            saveData();
+            e.target.reset();
+            document.getElementById('q-date').valueAsDate = new Date();
+        }
+
+        // --- MODALS ---
+        let currentModalSection = '';
+        function openModal(section) {
+            currentModalSection = section;
+            document.getElementById('modal').classList.add('open');
+            const container = document.getElementById('modal-fields');
+            container.innerHTML = '';
+            let fields = [];
+
+            if(section === 'receivables' || section === 'payables') {
+                document.getElementById('modal-title').textContent = section==='receivables'?'Nueva Cuenta por Cobrar':'Nueva Cuenta por Pagar';
+                fields = [
+                    {n:'type', l:'Tamaño', t:'select', opts:['GRANDE','PEQUENO']},
+                    {n:'date', l:'Fecha Préstamo', t:'date'},
+                    {n:'nextPaymentDate', l:'Fecha Próximo Vencimiento', t:'date'},
+                    {n:'person', l:'Persona (Contraparte)', t:'text'},
+                    {n:'concept', l:'Concepto', t:'text'},
+                    {n:'amount', l:'Monto Total', t:'number', step:'0.01'},
+                    {n:'interest', l:'Interés (%)', t:'text', v:'0%'},
+                    {n:'frequency', l:'Frecuencia', t:'select', opts:['Mensual','Quincenal','Semanal','Único']},
+                    {n:'paid', l:'Pagado (Inicial)', t:'number', v:0, step:'0.01'},
+                    {n:'note', l:'Nota', t:'text'}
+                ];
+            } else if (section === 'income') {
+                document.getElementById('modal-title').textContent = 'Nuevo Ingreso';
+                fields = [{n:'date',l:'Fecha',t:'date'}, {n:'concept',l:'Concepto',t:'text'}, {n:'person',l:'Persona',t:'text', v:currentUser.charAt(0).toUpperCase()+currentUser.slice(1)}, {n:'amount',l:'Monto',t:'number', step:'0.01'}, {n:'note',l:'Nota',t:'text'}];
+            } else if (section === 'expenses') {
+                document.getElementById('modal-title').textContent = 'Nuevo Gasto';
+                fields = [{n:'date',l:'Fecha',t:'date'}, {n:'person',l:'Persona',t:'text', v:currentUser.charAt(0).toUpperCase()+currentUser.slice(1)}, {n:'description',l:'Descripción',t:'text'}, {n:'category',l:'Categoría',t:'select', opts:['Comida','Transporte','Ocio','Vivienda','Salud']}, {n:'amount',l:'Monto',t:'number', step:'0.01'}, {n:'note',l:'Nota',t:'text'}];
+            } else if (section === 'charity') {
+                document.getElementById('modal-title').textContent = 'Nueva Tzedaká';
+                fields = [{n:'date',l:'Fecha',t:'date'}, {n:'concept',l:'Concepto',t:'text'}, {n:'amount',l:'Monto',t:'number', step:'0.01'}, {n:'note',l:'Nota',t:'text'}];
+            } else {
+                document.getElementById('modal-title').textContent = 'Nuevo Registro';
+                fields = [{n:'date',l:'Fecha',t:'date'}, {n:'amount',l:'Monto',t:'number', step:'0.01'}, {n:'note',l:'Nota',t:'text'}];
+                if(section==='savings') { fields.splice(1,0,{n:'type',l:'Tipo',t:'select',opts:['Obligatorio','Marginal']}); fields.splice(2,0,{n:'destination',l:'Destino',t:'text'}); }
+                if(section==='assets') { fields = [{n:'name',l:'Nombre',t:'text'}, {n:'value',l:'Valor',t:'number', step:'0.01'}, {n:'year',l:'Año',t:'number'}, {n:'note',l:'Nota',t:'text'}]; }
+            }
+
+            fields.forEach(f => {
+                let requiredAttr = (f.t !== 'text' && f.n !== 'concept' && f.n !== 'note') ? 'required' : '';
+                let inp = f.t==='select' ? `<select name="${f.n}" class="form-control">${f.opts.map(o=>`<option>${o}</option>`).join('')}</select>` : `<input type="${f.t}" name="${f.n}" class="form-control" value="${f.v||''}" ${requiredAttr} step="${f.step||'1'}">`;
+                container.innerHTML += `<div style="margin-bottom:15px;"><label style="font-weight:600; display:block; margin-bottom:5px; font-size:0.9rem;">${f.l}</label>${inp}</div>`;
+            });
+        }
+
+        function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+        function saveModal(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const item = { id: Date.now().toString() };
+            if(currentModalSection === 'receivables' || currentModalSection === 'payables') {
+                item.owner = currentUser.charAt(0).toUpperCase()+currentUser.slice(1);
+            }
+
+            for(let [k,v] of fd.entries()) {
+                if(['amount','paid','value','year'].includes(k)) v = parseFloat(v)||0;
+                item[k] = v;
+            }
+            appData[currentModalSection].push(item);
+            saveData();
+            closeModal();
+        }
+
+        // --- FORGIVENESS LOGIC ---
+        function openForgiveModal(type, id) {
+            document.getElementById('forgive-modal').classList.add('open');
+            document.getElementById('forgive-id').value = id;
+            document.getElementById('forgive-type').value = type;
+
+            let debt = null;
+            if(type === 'receivable') debt = appData.receivables.find(r => r.id === id);
+            else debt = appData.payables.find(p => p.id === id);
+
+            const pending = (debt.amount - debt.paid).toFixed(2);
+            let msg = "";
+            if(type === 'receivable') {
+                msg = `Vas a condonar S/ ${pending} que te debe ${debt.person}. Esto se registrará como Tzedaká (Gasto de Caridad).`;
+            } else {
+                msg = `Te van a condonar S/ ${pending} que debes a ${debt.person}. Esto se registrará como un Ingreso (Bendición/Regalo).`;
+            }
+            document.getElementById('forgive-info').textContent = msg;
+        }
+
+        function confirmForgive(e) {
+            e.preventDefault();
+            const id = document.getElementById('forgive-id').value;
+            const type = document.getElementById('forgive-type').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            if(type === 'receivable') {
+                const index = appData.receivables.findIndex(r => r.id === id);
+                const loan = appData.receivables[index];
+                const amountForgiven = loan.amount - loan.paid;
+                loan.paid = loan.amount; 
+                appData.charity.push({
+                    id: Date.now().toString(),
+                    date: today,
+                    concept: `Condonación Deuda: ${loan.person} (${loan.concept})`,
+                    amount: amountForgiven,
+                    note: 'Deuda perdonada y convertida en Tzedaká'
+                });
+            } 
+            else if (type === 'payable') {
+                const index = appData.payables.findIndex(p => p.id === id);
+                const loan = appData.payables[index];
+                const amountForgiven = loan.amount - loan.paid;
+                loan.paid = loan.amount;
+                appData.income.push({
+                    id: Date.now().toString(),
+                    date: today,
+                    concept: `Condonación Deuda Recibida: ${loan.person} (${loan.concept})`,
+                    person: loan.person,
+                    amount: amountForgiven,
+                    note: 'Deuda perdonada por el acreedor'
+                });
+            }
+
+            saveData();
+            document.getElementById('forgive-modal').classList.remove('open');
+            alert("Deuda condonada y registrada correctamente.");
+        }
+
+        function openPaymentModal(id) {
+            const loan = appData.receivables.find(r => r.id === id);
+            if(!loan) return;
+            document.getElementById('pay-loan-id').value = id;
+            document.getElementById('pay-modal-info').textContent = `Préstamo a ${loan.person}. Debe: S/ ${(loan.amount - loan.paid).toFixed(2)}.`;
+            document.getElementById('pay-amount').value = '';
+            document.getElementById('pay-next-date').value = loan.nextPaymentDate || '';
+            document.getElementById('payment-modal').classList.add('open');
+        }
+
+        function submitPayment(e) {
+            e.preventDefault();
+            const id = document.getElementById('pay-loan-id').value;
+            const amount = parseFloat(document.getElementById('pay-amount').value);
+            const nextDate = document.getElementById('pay-next-date').value;
+            const loanIndex = appData.receivables.findIndex(r => r.id === id);
+            if(loanIndex > -1) {
+                appData.receivables[loanIndex].paid = (appData.receivables[loanIndex].paid || 0) + amount;
+                if(nextDate) appData.receivables[loanIndex].nextPaymentDate = nextDate;
+                saveData();
+                document.getElementById('payment-modal').classList.remove('open');
+                alert("Pago registrado");
+            }
+        }
+
+        function delItem(sec, id) {
+            if(confirm("¿Eliminar registro permanentemente?")) {
+                appData[sec] = appData[sec].filter(i => i.id !== id);
+                saveData();
+            }
+        }
+
+        // --- EXCEL IMPORT / EXPORT (CSV) ---
+        function exportData() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+            csvContent += "SECCION,FECHA,PERSONA,CONCEPTO/DESCRIPCION,CATEGIA/TIPO,MONTO,PAGADO,NOTA,OWNER\n";
+            
+            const flatten = (sec, label) => {
+                appData[sec].forEach(row => {
+                    let line = `${label},${row.date||''},${row.person||''},${row.concept||row.description||row.name||''},${row.category||row.type||row.frequency||''},${row.amount||row.value||''},${row.paid||''},${row.note||''},${row.owner||''}`;
+                    csvContent += line + "\n";
+                });
+            };
+
+            flatten('income', 'INGRESOS');
+            flatten('expenses', 'GASTOS');
+            flatten('receivables', 'COBRAR');
+            flatten('payables', 'PAGAR');
+            flatten('charity', 'CARIDAD');
+            flatten('savings', 'AHORRO');
+            flatten('assets', 'ACTIVOS');
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `finanzas_backup_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split("\n");
+                
+                if(confirm("¿Esto REEMPLAZARÁ tus datos actuales con los del archivo Excel. ¿Estás seguro?")) {
+                    appData = {
+                        receivables: [], payables: [], charity: [], savings: [], assets: [], income: [], expenses: []
+                    };
+
+                    for(let i=1; i<rows.length; i++) {
+                        const cols = rows[i].split(","); 
+                        if(cols.length < 2) continue;
+                        const sec = cols[0].trim();
+                        const item = {
+                            date: cols[1], 
+                            person: cols[2], 
+                            concept: cols[3], 
+                            category: cols[4],
+                            amount: parseFloat(cols[5])||0,
+                            paid: parseFloat(cols[6])||0,
+                            note: cols[7],
+                            owner: cols[8]
+                        };
+                        
+                        item.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+
+                        if(sec === 'INGRESOS') { item.concept = cols[3]; appData.income.push(item); }
+                        else if(sec === 'GASTOS') { item.description = cols[3]; item.type = item.category; item.category = cols[4]; appData.expenses.push(item); }
+                        else if(sec === 'COBRAR') { item.type = item.category; appData.receivables.push(item); }
+                        else if(sec === 'PAGAR') { item.type = item.category; appData.payables.push(item); }
+                        else if(sec === 'CARIDAD') { appData.charity.push(item); }
+                        else if(sec === 'AHORRO') { item.type = item.category; appData.savings.push(item); }
+                        else if(sec === 'ACTIVOS') { item.name = cols[3]; item.value = item.amount; appData.assets.push(item); }
+                    }
+                    saveData();
+                    alert("Datos restaurados correctamente");
+                    input.value = ''; 
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function fmt(n) { return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(n); }
+    </script>
+</body>
+</html>
