@@ -590,6 +590,13 @@
                 });
 
                 document.getElementById('q-date').valueAsDate = new Date();
+                
+                // ---> AGREGA ESTO AQUÍ <---
+                // Forzar que el switch inicie en modo Personal (Derecha / Azul)
+                document.getElementById('view-switch').checked = true;
+                viewMode = 'PERSONAL';
+                // ---------------------------
+
                 window.nav('dashboard');
             } catch (error) {
                 console.error("Error cargando datos:", error);
