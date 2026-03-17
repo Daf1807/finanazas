@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Financiera V9 - Notificaciones Flotantes</title>
+    <title>Gestión Financiera V10 - Lógica Corregida</title>
     <style>
         :root {
             /* Paleta de Colores Moderna */
@@ -123,7 +123,7 @@
             display: none; align-items: center; justify-content: center; border: 2px solid var(--white);
         }
 
-        /* --- TARJETAS FLOTANTES (NUEVO ESTILO) --- */
+        /* --- TARJETAS FLOTANTES --- */
         #notification-cards-area {
             position: fixed;
             top: 80px;
@@ -135,7 +135,6 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            /* Scrollbar styling */
             scrollbar-width: thin;
             scrollbar-color: #cbd5e1 transparent;
         }
@@ -154,12 +153,10 @@
             border-left: 6px solid #cbd5e1;
             position: relative;
         }
-
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(50px); }
             to { opacity: 1; transform: translateX(0); }
         }
-
         .notif-card.urgent { border-left-color: var(--danger); background: #fef2f2; }
         .notif-card.warning { border-left-color: var(--warning); background: #fffbeb; }
         .notif-card.safe { border-left-color: var(--success); background: #f0fdf4; }
@@ -168,10 +165,8 @@
         .notif-title { font-weight: 700; font-size: 0.95rem; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
         .notif-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
         .notif-days { font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: inline-block; padding: 2px 8px; border-radius: 12px; background: rgba(255,255,255,0.6); }
-        
         .close-notif {
-            background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; line-height: 1;
-            padding: 0 5px;
+            background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0 5px;
         }
         .close-notif:hover { color: var(--danger); }
 
@@ -246,7 +241,7 @@
             .sidebar.active { transform: translateX(0); }
             .menu-toggle { display: block; font-size: 1.5rem; cursor: pointer; margin-right: 15px; color: var(--text-main); }
             .controls { gap: 10px; }
-            .view-toggle span { display: none; } /* Ocultar texto en movil */
+            .view-toggle span { display: none; }
             .quick-entry-panel { padding: 15px; }
             #notification-cards-area { width: 90%; right: 5%; top: 70px; }
         }
@@ -293,7 +288,6 @@
                 </div>
                 
                 <div class="controls">
-                    <!-- EXCEL BUTTONS -->
                     <button class="excel-btn" onclick="exportData()">
                         <span>⬇</span> Bajar Excel
                     </button>
@@ -302,7 +296,6 @@
                         <span>⬆</span> Subir Excel
                     </button>
 
-                    <!-- BELL ICON (SOLO CONTADOR) -->
                     <div class="notif-container">
                         <div class="notif-bell">🔔</div>
                         <div class="notif-badge" id="notif-badge">0</div>
@@ -319,11 +312,9 @@
                 </div>
             </div>
 
-            <!-- AREA DE NOTIFICACIONES FLOTANTES -->
             <div id="notification-cards-area"></div>
 
             <div class="content-scroll">
-                <!-- SECCION DASHBOARD -->
                 <div id="dashboard">
                     <div class="quick-entry-panel">
                         <h3>🚀 Registro Rápido</h3>
@@ -388,7 +379,6 @@
                         </form>
                     </div>
 
-                    <!-- CARDS -->
                     <div class="balance-grid">
                         <div class="card green">
                             <h3>Total Ingresos (Hogar)</h3>
@@ -417,7 +407,6 @@
                     </div>
                 </div>
 
-                <!-- AREA DE TABLAS -->
                 <div id="tables-area"></div>
             </div>
         </main>
@@ -482,9 +471,8 @@
     </div>
 
     <script>
-        // --- CONFIG ---
         const USERS = { 'brett':'brett', 'dafne':'dafne', 'narda':'narda', 'hitler':'hitler' };
-        const DB_KEY = 'family_finance_v9';
+        const DB_KEY = 'family_finance_v10';
         
         let appData = {
             receivables: [], 
@@ -544,12 +532,12 @@
             if (section === 'dashboard') {
                 dashboardDiv.style.display = 'block';
                 tablesDiv.style.display = 'none';
-                notifArea.style.display = 'flex'; // Mostrar tarjetas
+                notifArea.style.display = 'flex';
                 renderDashboard();
             } else {
                 dashboardDiv.style.display = 'none';
                 tablesDiv.style.display = 'block';
-                notifArea.style.display = 'none'; // Ocultar tarjetas en tablas
+                notifArea.style.display = 'none';
                 renderCurrentSection();
             }
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('active');
@@ -570,7 +558,6 @@
             let count = 0;
             const today = new Date(); today.setHours(0,0,0,0);
 
-            // Solo alertar de deudas que me pertenecen
             const myReceivables = appData.receivables.filter(r => !r.owner || r.owner.toLowerCase() === currentUser);
 
             myReceivables.forEach(loan => {
@@ -594,7 +581,6 @@
                     typeClass = 'warning'; icon = '🟠'; title = 'Próximo Vencimiento'; msg = `Faltan ${diffDays} días.`; daysText = `${diffDays} días`;
                 }
 
-                // Crear tarjeta HTML
                 const card = document.createElement('div');
                 card.className = `notif-card ${typeClass}`;
                 card.innerHTML = `
@@ -609,7 +595,6 @@
                 container.appendChild(card);
             });
 
-            // Actualizar badge de la campanita
             badge.style.display = count > 0 ? 'flex' : 'none';
             badge.textContent = count;
             if(container.innerHTML === '') {
@@ -819,7 +804,15 @@
                 const debt = appData.receivables.find(d => d.id === debtId);
                 if(debt) {
                     debt.paid = (parseFloat(debt.paid) || 0) + amount;
-                    appData.income.push({ id: Date.now().toString(), date, concept: `Cobro: ${debt.concept}`, person: debt.person, amount });
+                    // FIX LOGIC: INCOME BELONGS TO THE OWNER (ME), NOT THE DEBTOR
+                    appData.income.push({ 
+                        id: Date.now().toString(), 
+                        date, 
+                        concept: `Cobro Deuda: ${debt.person} (${debt.concept})`, 
+                        person: ownerName, // NOW IT SAYS BRETT, NOT JUAN
+                        amount,
+                        category: 'Cobro Deuda'
+                    });
                 }
             }
             else if (type === 'debt-out') {
@@ -980,8 +973,22 @@
             const nextDate = document.getElementById('pay-next-date').value;
             const loanIndex = appData.receivables.findIndex(r => r.id === id);
             if(loanIndex > -1) {
-                appData.receivables[loanIndex].paid = (appData.receivables[loanIndex].paid || 0) + amount;
-                if(nextDate) appData.receivables[loanIndex].nextPaymentDate = nextDate;
+                const loan = appData.receivables[loanIndex];
+                const ownerName = loan.owner || currentUser; // Get owner from loan record
+                
+                loan.paid = (parseFloat(loan.paid) || 0) + amount;
+                if(nextDate) loan.nextPaymentDate = nextDate;
+
+                // FIX LOGIC: INCOME BELONGS TO THE OWNER
+                appData.income.push({ 
+                    id: Date.now().toString(), 
+                    date: new Date().toISOString().split('T')[0],
+                    concept: `Cobro Deuda: ${loan.person} (${loan.concept})`,
+                    person: ownerName, // REGISTER TO OWNER
+                    amount,
+                    category: 'Cobro Deuda'
+                });
+
                 saveData();
                 document.getElementById('payment-modal').classList.remove('open');
                 alert("Pago registrado");
